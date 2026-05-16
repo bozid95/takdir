@@ -1,10 +1,10 @@
-```html
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lauhul Mahfuz - Kitab Fokus Akar</title>
+    <title>Lauhul Mahfuz - Kitab Takdir Acak</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -34,21 +34,13 @@
             filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
         }
 
-        .transition-organic {
-            transition: all 0.3s ease-out;
-        }
-
-        .avatar-transition {
-            transition: transform 0.4s ease-out;
+        .animate-pulse-custom {
+            animation: pulse-glow 2s infinite ease-in-out;
         }
 
         @keyframes pulse-glow {
             0%, 100% { opacity: 0.1; transform: scale(1); }
             50% { opacity: 0.2; transform: scale(1.2); }
-        }
-
-        .animate-pulse-custom {
-            animation: pulse-glow 2s infinite ease-in-out;
         }
     </style>
 </head>
@@ -61,15 +53,14 @@
         <!-- Frame Kitab -->
         <div class="kitab-frame w-full max-w-[850px] aspect-[3/4.2] rounded-r-xl overflow-hidden">
             
-            <!-- Tombol Reset -->
-            <div class="absolute top-6 left-6 z-50 flex flex-col items-center gap-1">
+            <!-- Tombol Reset (Tanpa Teks) -->
+            <div class="absolute top-6 left-6 z-50">
                 <button id="resetBtn" class="w-10 h-10 rounded-full border border-[#3c2a21]/20 flex items-center justify-center bg-[#e7d4b5] hover:bg-[#3c2a21] hover:text-[#e7d4b5] transition-all duration-300 shadow-sm active:scale-90">
                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="23 4 23 10 17 10"></polyline>
                         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                     </svg>
                 </button>
-                <span class="text-[8px] font-bold tracking-widest text-[#3c2a21]/40 uppercase">Reset</span>
             </div>
 
             <!-- Ornamen Sudut -->
@@ -95,7 +86,7 @@
             </div>
 
             <!-- Kontrol Utama -->
-            <div class="py-10 px-12 flex justify-center z-50">
+            <div class="pb-16 pt-6 px-12 flex justify-center z-50">
                 <div class="flex gap-16">
                     <button id="trueBtn" class="group relative flex items-center justify-center w-16 h-16 rounded-full border-2 border-[#b8860b]/30 bg-transparent active:scale-90 hover:bg-[#b8860b] hover:text-[#e7d4b5] text-[#b8860b] transition-all duration-200">
                         <span class="text-[11px] font-bold tracking-widest uppercase">True</span>
@@ -124,7 +115,6 @@
         let networkNodes = [];
         let networkConnections = [];
 
-        // Inisialisasi Data Network
         function initNetwork() {
             networkNodes = [];
             networkConnections = [];
@@ -137,13 +127,21 @@
                     const randomShift = (Math.sin(i * 12 + j) * (horizontalGap * 0.15));
                     const x = 75 + (horizontalGap * (j + 1)) + randomShift;
                     const y = 80 + (i * verticalGap);
-                    const isFirstChildTrue = ((i * 37 + j * 13 + 7) % 2 === 0);
 
                     networkNodes.push({ id, x, y, layer: i });
 
                     if (i < layers) {
-                        networkConnections.push({ from: id, to: `${i + 1}-${j * 2}`, isTrue: isFirstChildTrue });
-                        networkConnections.push({ from: id, to: `${i + 1}-${j * 2 + 1}`, isTrue: !isFirstChildTrue });
+                        const isLeftChildTrue = Math.random() < 0.5;
+                        networkConnections.push({ 
+                            from: id, 
+                            to: `${i + 1}-${j * 2}`, 
+                            isTrue: isLeftChildTrue 
+                        });
+                        networkConnections.push({ 
+                            from: id, 
+                            to: `${i + 1}-${j * 2 + 1}`, 
+                            isTrue: !isLeftChildTrue 
+                        });
                     }
                 }
             }
@@ -160,7 +158,6 @@
             const nodeGroup = document.getElementById('nodesGroup');
             const lastId = history[history.length - 1];
             
-            // Render Koneksi
             connGroup.innerHTML = networkConnections.map(conn => {
                 const fromNode = networkNodes.find(n => n.id === conn.from);
                 const toNode = networkNodes.find(n => n.id === conn.to);
@@ -188,7 +185,6 @@
                         style="opacity: ${opacity}; transition: all 0.3s ease-out;" ${filter ? `filter="${filter}"` : ""}></path>`;
             }).join('');
 
-            // Render Node
             nodeGroup.innerHTML = networkNodes.map(node => {
                 const isActive = history.includes(node.id);
                 const isTargetOfGuidance = showGuidance && networkConnections.some(c => c.from === lastId && c.to === node.id && c.isTrue);
@@ -214,7 +210,6 @@
                         style="opacity: ${opacity}; transition: all 0.3s ease-out;" ${filter ? `filter="${filter}"` : ""}></circle>`;
             }).join('');
 
-            // Update Avatar
             const currentNode = networkNodes.find(n => n.id === lastId);
             const avatar = document.getElementById('avatarGroup');
             avatar.style.transition = "transform 0.4s ease-out";
@@ -234,7 +229,6 @@
             }
         }
 
-        // Event Listeners
         document.getElementById('trueBtn').addEventListener('click', () => move(true));
         document.getElementById('falseBtn').addEventListener('click', () => move(false));
         document.getElementById('doaBtn').addEventListener('click', () => {
@@ -248,14 +242,12 @@
         document.getElementById('resetBtn').addEventListener('click', () => {
             history = ['0-0'];
             showGuidance = false;
+            initNetwork();
             render();
         });
 
-        // Start
         initNetwork();
         render();
     </script>
 </body>
 </html>
-
-```
