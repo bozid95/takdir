@@ -1,0 +1,261 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lauhul Mahfuz - Kitab Fokus Akar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #1a120b;
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+            user-select: none;
+        }
+
+        .wood-texture {
+            background-image: radial-gradient(#3c2a21 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.2;
+        }
+
+        .kitab-frame {
+            background-color: #e7d4b5;
+            box-shadow: 30px 0 60px -15px rgba(0,0,0,0.8), inset 5px 0 20px rgba(0,0,0,0.2);
+            border-left: 35px solid #3c2a21;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .glow-filter {
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
+        }
+
+        .transition-organic {
+            transition: all 0.3s ease-out;
+        }
+
+        .avatar-transition {
+            transition: transform 0.4s ease-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.1; transform: scale(1); }
+            50% { opacity: 0.2; transform: scale(1.2); }
+        }
+
+        .animate-pulse-custom {
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+        <!-- Meja Kayu -->
+        <div class="absolute inset-0 wood-texture pointer-events-none"></div>
+
+        <!-- Frame Kitab -->
+        <div class="kitab-frame w-full max-w-[850px] aspect-[3/4.2] rounded-r-xl overflow-hidden">
+            
+            <!-- Tombol Reset -->
+            <div class="absolute top-6 left-6 z-50 flex flex-col items-center gap-1">
+                <button id="resetBtn" class="w-10 h-10 rounded-full border border-[#3c2a21]/20 flex items-center justify-center bg-[#e7d4b5] hover:bg-[#3c2a21] hover:text-[#e7d4b5] transition-all duration-300 shadow-sm active:scale-90">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                </button>
+                <span class="text-[8px] font-bold tracking-widest text-[#3c2a21]/40 uppercase">Reset</span>
+            </div>
+
+            <!-- Ornamen Sudut -->
+            <div class="absolute top-6 right-6 w-16 h-16 border-t-2 border-r-2 border-[#8b7355] opacity-10 pointer-events-none"></div>
+            <div class="absolute bottom-6 right-6 w-16 h-16 border-b-2 border-r-2 border-[#8b7355] opacity-10 pointer-events-none"></div>
+
+            <!-- Canvas SVG -->
+            <div class="flex-1 relative mt-4 pointer-events-none">
+                <svg id="rootSvg" viewBox="0 0 1000 1200" class="w-full h-full scale-[1.05]" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <filter id="whiteGlow">
+                            <feGaussianBlur stdDeviation="5" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+                    <g id="connectionsGroup"></g>
+                    <g id="nodesGroup"></g>
+                    <g id="avatarGroup">
+                        <circle id="avatarPulse" r="20" fill="#3c2a21" class="animate-pulse-custom" />
+                        <circle r="5" fill="#3c2a21" />
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Kontrol Utama -->
+            <div class="py-10 px-12 flex justify-center z-50">
+                <div class="flex gap-16">
+                    <button id="trueBtn" class="group relative flex items-center justify-center w-16 h-16 rounded-full border-2 border-[#b8860b]/30 bg-transparent active:scale-90 hover:bg-[#b8860b] hover:text-[#e7d4b5] text-[#b8860b] transition-all duration-200">
+                        <span class="text-[11px] font-bold tracking-widest uppercase">True</span>
+                    </button>
+                    
+                    <button id="doaBtn" class="group relative flex items-center justify-center w-16 h-16 rounded-full border-2 border-[#3c2a21]/20 bg-transparent active:scale-90 hover:bg-[#3c2a21] hover:text-[#e7d4b5] text-[#3c2a21] transition-all duration-200">
+                        <span class="text-[11px] font-bold tracking-widest uppercase">Doa</span>
+                    </button>
+
+                    <button id="falseBtn" class="group relative flex items-center justify-center w-16 h-16 rounded-full border-2 border-[#800000]/30 bg-transparent active:scale-90 hover:bg-[#800000] hover:text-[#e7d4b5] text-[#800000] transition-all duration-200">
+                        <span class="text-[11px] font-bold tracking-widest uppercase">False</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const layers = 7;
+        const width = 1000;
+        const height = 1200;
+        const verticalGap = (height - 200) / layers;
+        
+        let history = ['0-0'];
+        let showGuidance = false;
+        let networkNodes = [];
+        let networkConnections = [];
+
+        // Inisialisasi Data Network
+        function initNetwork() {
+            networkNodes = [];
+            networkConnections = [];
+            for (let i = 0; i <= layers; i++) {
+                const nodesInLayer = Math.pow(2, i);
+                const horizontalGap = (width - 150) / (nodesInLayer + 1);
+
+                for (let j = 0; j < nodesInLayer; j++) {
+                    const id = `${i}-${j}`;
+                    const randomShift = (Math.sin(i * 12 + j) * (horizontalGap * 0.15));
+                    const x = 75 + (horizontalGap * (j + 1)) + randomShift;
+                    const y = 80 + (i * verticalGap);
+                    const isFirstChildTrue = ((i * 37 + j * 13 + 7) % 2 === 0);
+
+                    networkNodes.push({ id, x, y, layer: i });
+
+                    if (i < layers) {
+                        networkConnections.push({ from: id, to: `${i + 1}-${j * 2}`, isTrue: isFirstChildTrue });
+                        networkConnections.push({ from: id, to: `${i + 1}-${j * 2 + 1}`, isTrue: !isFirstChildTrue });
+                    }
+                }
+            }
+        }
+
+        function getCurvePath(x1, y1, x2, y2) {
+            const midY = (y1 + y2) / 2;
+            const seed = (Math.sin(x1 * 0.05) * 45) + (Math.cos(y2 * 0.05) * 35);
+            return `M ${x1} ${y1} C ${x1 + seed} ${midY}, ${x2 - seed} ${midY}, ${x2} ${y2}`;
+        }
+
+        function render() {
+            const connGroup = document.getElementById('connectionsGroup');
+            const nodeGroup = document.getElementById('nodesGroup');
+            const lastId = history[history.length - 1];
+            
+            // Render Koneksi
+            connGroup.innerHTML = networkConnections.map(conn => {
+                const fromNode = networkNodes.find(n => n.id === conn.from);
+                const toNode = networkNodes.find(n => n.id === conn.to);
+                const isActive = history.includes(conn.from) && history.includes(conn.to);
+                const isGuided = showGuidance && conn.from === lastId && conn.isTrue;
+
+                let strokeColor = "#8b7355";
+                let opacity = 0.15;
+                let strokeWidth = 3.5;
+                let filter = "";
+
+                if (isActive) {
+                    strokeColor = conn.isTrue ? "#b8860b" : "#800000";
+                    opacity = 1;
+                    strokeWidth = 12;
+                } else if (isGuided) {
+                    strokeColor = "#ffffff";
+                    opacity = 1;
+                    strokeWidth = 16;
+                    filter = "url(#whiteGlow)";
+                }
+
+                return `<path d="${getCurvePath(fromNode.x, fromNode.y, toNode.x, toNode.y)}" 
+                        stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" fill="none"
+                        style="opacity: ${opacity}; transition: all 0.3s ease-out;" ${filter ? `filter="${filter}"` : ""}></path>`;
+            }).join('');
+
+            // Render Node
+            nodeGroup.innerHTML = networkNodes.map(node => {
+                const isActive = history.includes(node.id);
+                const isTargetOfGuidance = showGuidance && networkConnections.some(c => c.from === lastId && c.to === node.id && c.isTrue);
+                
+                let nodeColor = "#3c2a21";
+                let opacity = 0.3;
+                let r = 6;
+                let filter = "";
+
+                if (isActive) {
+                    const incoming = networkConnections.find(c => c.to === node.id && history.includes(c.from));
+                    nodeColor = incoming?.isTrue ? "#b8860b" : (incoming ? "#800000" : "#3c2a21");
+                    opacity = 1;
+                    r = 9;
+                } else if (isTargetOfGuidance) {
+                    nodeColor = "#ffffff";
+                    opacity = 1;
+                    r = 10;
+                    filter = "url(#whiteGlow)";
+                }
+
+                return `<circle cx="${node.x}" cy="${node.y}" r="${r}" fill="${nodeColor}" 
+                        style="opacity: ${opacity}; transition: all 0.3s ease-out;" ${filter ? `filter="${filter}"` : ""}></circle>`;
+            }).join('');
+
+            // Update Avatar
+            const currentNode = networkNodes.find(n => n.id === lastId);
+            const avatar = document.getElementById('avatarGroup');
+            avatar.style.transition = "transform 0.4s ease-out";
+            avatar.setAttribute('transform', `translate(${currentNode.x}, ${currentNode.y})`);
+        }
+
+        function move(isTrueTarget) {
+            const lastId = history[history.length - 1];
+            const layer = parseInt(lastId.split('-')[0]);
+            if (layer >= layers) return;
+
+            const connection = networkConnections.find(c => c.from === lastId && c.isTrue === isTrueTarget);
+            if (connection) {
+                history.push(connection.to);
+                showGuidance = false;
+                render();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('trueBtn').addEventListener('click', () => move(true));
+        document.getElementById('falseBtn').addEventListener('click', () => move(false));
+        document.getElementById('doaBtn').addEventListener('click', () => {
+            showGuidance = true;
+            render();
+            setTimeout(() => {
+                showGuidance = false;
+                render();
+            }, 2000);
+        });
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            history = ['0-0'];
+            showGuidance = false;
+            render();
+        });
+
+        // Start
+        initNetwork();
+        render();
+    </script>
+</body>
+</html>
+
+```
